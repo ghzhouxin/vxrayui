@@ -1,11 +1,17 @@
 package subscription
 
 import (
-	"crypto/sha256"
-	"fmt"
+	"bufio"
+	"encoding/base64"
 	"io"
+	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 
+	"github.com/xtls/libxray/share"
+	"github.com/xtls/xray-core/infra/conf"
+	"zhouxin.learn/go/vxrayui/config"
 	"zhouxin.learn/go/vxrayui/internal/storage"
 )
 
@@ -18,19 +24,46 @@ func NewFetcher(client *http.Client, store storage.Storage) *Fetcher {
 	return &Fetcher{client: client, storage: store}
 }
 
-func (f *Fetcher) Fetch(url string) ([]byte, string, error) {
-	resp, err := f.client.Get(url)
+func (f *Fetcher) Fetch(subscription config.Subsciption) []*conf.OutboundDetourConfig {
+	resp, err := f.client.Get(subscription.URL)
 	if err != nil {
-		return nil, "", err
+		return nil
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", err
+	var body io.Reader = resp.Body
+	if subscription.IsBase64 {
+		body = base64.NewDecoder(base64.StdEncoding, resp.Body)
 	}
-	hash := sha256.Sum256(data)
-	return data, fmt.Sprintf("%x", hash), nil
+
+	scanner := bufio.NewScanner(body)
+	var outbounds []*conf.OutboundDetourConfig
+	for scanner.Scan() {
+		text := scanner.Text()
+		if text == "" || strings.HasPrefix(text, "#") {
+			continue
+		}
+
+		link, err := url.Parse(text)
+		if err != nil {
+			slog.Error("parse url error", "url", text, "error", err)
+			continue
+		}
+
+		shareLink := share.XrayShareLink{
+			Link:    link,
+			RawText: text,
+		}
+
+		if outbound, err := shareLink.Outbound(); err == nil {
+			outbounds = append(outbounds, outbound)
+		} else {
+			slog.Error("shareLink.Outbound err", "url", text, "error", err)
+			continue
+		}
+	}
+
+	return outbounds
 }
 
 func (f *Fetcher) Validate(data []byte) bool {
