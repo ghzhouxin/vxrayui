@@ -1,12 +1,15 @@
 package config
 
 import (
+	_ "embed"
 	"log"
-	"os"
-	"sync/atomic"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed config.yaml
+var configData []byte
 
 type LogConfig struct {
 	Level   string `yaml:"level" json:"level"`
@@ -23,36 +26,49 @@ type LogConfig struct {
 		MaxBackups int    `yaml:"max_backups" json:"max_backups"`
 		ShardBy    string `yaml:"shard_by" json:"shard_by"`
 		Compress   bool   `yaml:"compress" json:"compress"`
-	} `yaml:"logger" json:"logger"`
+	} `yaml:"file" json:"file"`
 }
 
-type Subsciption struct {
+type Subscription struct {
 	Name     string `json:"name" yaml:"name"`
-	URL      string `json:"url" yaml:"url"`
+	Url      string `json:"url" yaml:"url"`
 	IsBase64 bool   `json:"is_base64" yaml:"is_base64"`
 }
 
 type config struct {
-	Log          *LogConfig    `json:"logger" yaml:"logger"`
-	Subsciptions []Subsciption `json:"subsciptions" yaml:"subsciptions"`
+	Logger        *LogConfig      `json:"logger" yaml:"logger"`
+	Subscriptions []*Subscription `json:"subscriptions" yaml:"subscriptions"`
 }
 
-var globalConfig atomic.Value
+var (
+	Config   *config
+	initOnce sync.Once
+)
 
-func LoadConfig(path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		log.Fatalf("failed to read config file: %v", err)
-	}
+func Init() {
+	initOnce.Do(func() {
+		initConfig()
+	})
+}
+
+func initConfig() {
+	// TODO 热加载外部文件
+	// if data, err := os.ReadFile("custom.yaml");  err == nil {
+	// 	// 使用外部配置
+	// } else {
+	// 	// 2. 回退到嵌入配置
+	// 	data, _ = configFile.ReadFile("default.yaml")
+	// }
+
+	// data, err := configFile.ReadFile("config.yaml")
+	// if err != nil {
+	// 	log.Fatalf("failed to read config file: %v", err)
+	// }
 
 	var cfg config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	if err := yaml.Unmarshal(configData, &cfg); err != nil {
 		log.Fatalf("failed to unmarshal config file: %v", err)
 	}
 
-	globalConfig.Store(&cfg)
-}
-
-func GetConfig() *config {
-	return globalConfig.Load().(*config)
+	Config = &cfg
 }

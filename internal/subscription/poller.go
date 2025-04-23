@@ -3,17 +3,17 @@ package subscription
 import (
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"zhouxin.learn/go/vxrayui/internal/decision"
+	"zhouxin.learn/go/vxrayui/internal/log"
 	"zhouxin.learn/go/vxrayui/internal/stats"
 	"zhouxin.learn/go/vxrayui/internal/storage"
 )
 
 type Poller struct {
-	fetcher  *Fetcher
+	parser   *SubscriptionParser
 	storage  storage.Storage
 	engine   *decision.Engine
 	stats    *stats.Collector
@@ -31,14 +31,14 @@ type SourceConfig struct {
 }
 
 func NewPoller(
-	fetcher *Fetcher,
+	parser *SubscriptionParser,
 	store storage.Storage,
 	engine *decision.Engine,
 	stats *stats.Collector,
 	sources map[string]*SourceConfig,
 ) *Poller {
 	return &Poller{
-		fetcher:  fetcher,
+		parser:   parser,
 		storage:  store,
 		engine:   engine,
 		stats:    stats,
@@ -95,10 +95,10 @@ func (p *Poller) pollAllSources() {
 func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 	source.LastCheck = time.Now()
 
-	data, hash, err := p.fetcher.Fetch(url)
+	data, hash, err := p.parser.Fetch(url)
 	if err != nil {
 		source.FailureCount++
-		log.Printf("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
+		log.Logger.Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 	}
 
 	// 验证并存储新配置
-	if valid := p.fetcher.Validate(data); valid {
+	if valid := p.parser.Validate(data); valid {
 		newCfg := &storage.ConfigMetadata{
 			ID:          url,
 			Content:     data,
@@ -121,7 +121,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 		}
 
 		if err := p.storage.StoreConfig(newCfg); err != nil {
-			log.Printf("Failed to store config from %s: %v", url, err)
+			log.Logger.Error("Failed to store config from %s: %v", url, err)
 			return
 		}
 

@@ -395,7 +395,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 	data, hash, err := p.fetcher.Fetch(url) 
 	if err != nil {
 		source.FailureCount++
-		log.Printf("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
+		logger.Logger().Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
 		return 
 	}
  
@@ -418,7 +418,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 		}
  
 		if err := p.storage.StoreConfig(newCfg);  err != nil {
-			log.Printf("Failed to store config from %s: %v", url, err)
+			logger.Logger().Error("Failed to store config from %s: %v", url, err)
 			return 
 		}
  
