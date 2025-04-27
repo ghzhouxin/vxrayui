@@ -1,17 +1,16 @@
 package config
 
 import (
-	_ "embed"
+	"embed"
+	"flag"
 	"log"
+	"os"
 	"sync"
 
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed config.yaml
-var configData []byte
-
-type LogConfig struct {
+type Logger struct {
 	Level   string `yaml:"level" json:"level"`
 	Console struct {
 		Enabled bool   `yaml:"enabled" json:"enabled"`
@@ -36,13 +35,17 @@ type Subscription struct {
 }
 
 type config struct {
-	Logger        *LogConfig      `json:"logger" yaml:"logger"`
+	Logger        *Logger         `json:"logger" yaml:"logger"`
 	Subscriptions []*Subscription `json:"subscriptions" yaml:"subscriptions"`
 }
 
 var (
-	Config   *config
-	initOnce sync.Once
+	//go:embed config.yaml
+	defaultConfigFile embed.FS
+	configFilePath    string = *flag.String("config", "", "config file path")
+	initOnce          sync.Once
+
+	Config *config
 )
 
 func Init() {
@@ -52,18 +55,20 @@ func Init() {
 }
 
 func initConfig() {
-	// TODO 热加载外部文件
-	// if data, err := os.ReadFile("custom.yaml");  err == nil {
-	// 	// 使用外部配置
-	// } else {
-	// 	// 2. 回退到嵌入配置
-	// 	data, _ = configFile.ReadFile("default.yaml")
-	// }
-
-	// data, err := configFile.ReadFile("config.yaml")
-	// if err != nil {
-	// 	log.Fatalf("failed to read config file: %v", err)
-	// }
+	var configData []byte
+	if configFilePath != "" {
+		if data, err := os.ReadFile(configFilePath); err == nil {
+			configData = data
+		} else {
+			log.Fatalf("failed to read config file: %v", err)
+		}
+	} else {
+		if data, err := defaultConfigFile.ReadFile("config.yaml"); err == nil {
+			configData = data
+		} else {
+			log.Fatalf("failed to read default config file: %v", err)
+		}
+	}
 
 	var cfg config
 	if err := yaml.Unmarshal(configData, &cfg); err != nil {

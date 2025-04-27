@@ -1,12 +1,16 @@
 package main
 
 import (
+	"flag"
+
 	"zhouxin.learn/go/vxrayui/config"
-	logger "zhouxin.learn/go/vxrayui/internal/log"
+	"zhouxin.learn/go/vxrayui/internal/logger"
 	"zhouxin.learn/go/vxrayui/internal/subscription"
 )
 
 func main() {
+	flag.Parse()
+
 	config.Init()
 	logger.Init()
 

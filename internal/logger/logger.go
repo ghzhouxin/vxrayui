@@ -1,4 +1,4 @@
-package log
+package logger
 
 import (
 	"io"
@@ -21,7 +21,7 @@ func Init() {
 	})
 }
 
-func initLogger(cfg *config.LogConfig) *slog.Logger {
+func initLogger(cfg *config.Logger) *slog.Logger {
 	var handlers []slog.Handler
 	var level slog.Level
 	err := level.UnmarshalText([]byte(cfg.Level))

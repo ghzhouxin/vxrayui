@@ -1,4 +1,4 @@
-package log
+package logger
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 )
 
 type ShardFileHandler struct {
-	cfg     *config.LogConfig
+	cfg     *config.Logger
 	writer  *os.File
 	current string
 	shardFn func() string
 }
 
-func NewSharedFileHandler(cfg *config.LogConfig) *ShardFileHandler {
+func NewSharedFileHandler(cfg *config.Logger) *ShardFileHandler {
 	if err := os.MkdirAll(cfg.File.Path, 0755); err != nil {
 		log.Fatalf("failed to create log directory: %v", err)
 	}

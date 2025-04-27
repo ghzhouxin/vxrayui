@@ -12,7 +12,7 @@ import (
 	"github.com/xtls/libxray/share"
 	"github.com/xtls/xray-core/infra/conf"
 	"zhouxin.learn/go/vxrayui/config"
-	"zhouxin.learn/go/vxrayui/internal/log"
+	"zhouxin.learn/go/vxrayui/internal/logger"
 	"zhouxin.learn/go/vxrayui/pkg/counter"
 )
 
@@ -37,14 +37,14 @@ func NewSubscriptionParser() *SubscriptionParser {
 func (p *SubscriptionParser) ParseSubscription(subscription *config.Subscription) []*conf.OutboundDetourConfig {
 	resp, err := http.Get(subscription.Url)
 	if err != nil {
-		log.Logger.Error(fmt.Sprintf("Failed to fetch subscription: %v", err))
+		logger.Logger.Error(fmt.Sprintf("Failed to fetch subscription: %v", err))
 		return nil
 	}
 	defer resp.Body.Close()
 
 	reader := decodeBody(resp.Body, subscription.IsBase64)
 	if reader == nil {
-		log.Logger.Error("Failed to decode subscription body")
+		logger.Logger.Error("Failed to decode subscription body")
 		return nil
 	}
 
@@ -71,7 +71,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		}
 
 		if !isValidLink(line) {
-			log.Logger.Error(fmt.Sprintf("Unsupported subscription: %s", line))
+			logger.Logger.Error(fmt.Sprintf("Unsupported subscription: %s", line))
 			counter.Incr("subscription.invalid", 1)
 			continue
 		}
@@ -81,7 +81,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		// TODO 抽象方法
 		link, err := url.Parse(line)
 		if err != nil {
-			log.Logger.Error(fmt.Sprintf("Invalid URL in subscription: %s, error: %v", line, err))
+			logger.Logger.Error(fmt.Sprintf("Invalid URL in subscription: %s, error: %v", line, err))
 			counter.Incr("subscription.invalid", 1)
 			continue
 		}
@@ -91,7 +91,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		}
 		outbound, err := shareLink.Outbound()
 		if err != nil {
-			log.Logger.Error(fmt.Sprintf("Failed to parse outbound from link: %s, error: %v", line, err))
+			logger.Logger.Error(fmt.Sprintf("Failed to parse outbound from link: %s, error: %v", line, err))
 			counter.Incr("subscription.parse.error", 1)
 			continue
 		}
@@ -99,11 +99,11 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Logger.Error(fmt.Sprintf("Error reading subscription: %v", err))
+		logger.Logger.Error(fmt.Sprintf("Error reading subscription: %v", err))
 	}
 
 	cnt := counter.Get("subscription.invalid") + counter.Get("subscription.parse.error")
-	log.Logger.Info(fmt.Sprintf("Parsed %d outbounds from subscription, error cnt: %v", len(outbounds), cnt))
+	logger.Logger.Info(fmt.Sprintf("Parsed %d outbounds from subscription, error cnt: %v", len(outbounds), cnt))
 	return outbounds
 }
 

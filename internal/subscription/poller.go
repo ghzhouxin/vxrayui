@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"zhouxin.learn/go/vxrayui/internal/decision"
-	"zhouxin.learn/go/vxrayui/internal/log"
+	"zhouxin.learn/go/vxrayui/internal/logger"
 	"zhouxin.learn/go/vxrayui/internal/stats"
 	"zhouxin.learn/go/vxrayui/internal/storage"
 )
@@ -98,7 +98,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 	data, hash, err := p.parser.Fetch(url)
 	if err != nil {
 		source.FailureCount++
-		log.Logger.Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
+		logger.Logger.Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
 		return
 	}
 
@@ -121,7 +121,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 		}
 
 		if err := p.storage.StoreConfig(newCfg); err != nil {
-			log.Logger.Error("Failed to store config from %s: %v", url, err)
+			logger.Logger.Error("Failed to store config from %s: %v", url, err)
 			return
 		}
 
