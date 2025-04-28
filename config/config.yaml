@@ -1,25 +1,53 @@
 logger:
-  level: "DEBUG"  # slog.Level DEBUG|INFO|WARN|ERROR
+  level: "DEBUG" # slog.Level DEBUG|INFO|WARN|ERROR
   console:
-    enabled: true 
-    format: "text"  # text/json 
+    enabled: true
+    format: "text" # text/json
   file:
-    enabled: true 
+    enabled: true
     path: "./logs"
-    filename: "vxray.log" 
-    max_size: 10     # MB 
-    max_age: 7       # days 
-    max_backups: 30  # files 
-    shard_by: "day"  # day/hour/minute 
-    compress: true 
+    filename: "vxray.log"
+    max_size: 10 # MB
+    max_age: 7 # days
+    max_backups: 30 # files
+    shard_by: "day" # day/hour/minute
+    compress: true
+
+storage:
+  type: "bbolt"
+  path: "./vxray.db"
 
 subscriptions:
   - name: barry-far
+    url: https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/vmess.txt
+    scheme: "vmess"
+    is_base64: true
+    enabled: true
+  - name: barry-far
+    url: https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/vless.txt
+    scheme: "vless"
+    is_base64: true
+    enabled: true
+  - name: barry-far
+    url: https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/trojan.txt
+    scheme: "trojan"
+    is_base64: true
+    enabled: true
+  - name: barry-far
+    url: https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/ss.txt
+    scheme: "ss"
+    is_base64: true
+    enabled: true
+
+  - name: barry-far
     url: https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt
     is_base64: false
+    enabled: false
   - name: aiboboxx
     url: https://raw.githubusercontent.com/aiboboxx/v2rayfree/main/v2
     is_base64: true
+    enabled: false
   - name: free18
     url: https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt
     is_base64: true
+    enabled: false

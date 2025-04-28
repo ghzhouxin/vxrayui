@@ -32,12 +32,22 @@ type Subscription struct {
 	Name     string `json:"name" yaml:"name"`
 	Url      string `json:"url" yaml:"url"`
 	IsBase64 bool   `json:"is_base64" yaml:"is_base64"`
+	Enabled  bool   `json:"enabled" yaml:"enabled"`
+	Scheme   string `json:"scheme" yaml:"scheme"`
+}
+
+type Storage struct {
+	Type string `json:"type" yaml:"type"`
+	Path string `json:"path" yaml:"path"`
 }
 
 type config struct {
 	Logger        *Logger         `json:"logger" yaml:"logger"`
 	Subscriptions []*Subscription `json:"subscriptions" yaml:"subscriptions"`
+	Storage       *Storage        `json:"storage" yaml:"storage"`
 }
+
+const DefalutScheme string = "mix"
 
 var (
 	//go:embed config.yaml
@@ -45,8 +55,20 @@ var (
 	configFilePath    string = *flag.String("config", "", "config file path")
 	initOnce          sync.Once
 
-	Config *config
+	cfg *config
 )
+
+func GetLogger() *Logger {
+	return cfg.Logger
+}
+
+func GetSubscriptions() []*Subscription {
+	return cfg.Subscriptions
+}
+
+func GetStorage() *Storage {
+	return cfg.Storage
+}
 
 func Init() {
 	initOnce.Do(func() {
@@ -70,10 +92,10 @@ func initConfig() {
 		}
 	}
 
-	var cfg config
-	if err := yaml.Unmarshal(configData, &cfg); err != nil {
+	var config config
+	if err := yaml.Unmarshal(configData, &config); err != nil {
 		log.Fatalf("failed to unmarshal config file: %v", err)
 	}
 
-	Config = &cfg
+	cfg = &config
 }

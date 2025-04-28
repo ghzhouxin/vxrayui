@@ -8,15 +8,13 @@ import (
 
 	"zhouxin.learn/go/vxrayui/internal/decision"
 	"zhouxin.learn/go/vxrayui/internal/logger"
-	"zhouxin.learn/go/vxrayui/internal/stats"
-	"zhouxin.learn/go/vxrayui/internal/storage"
+	"zhouxin.learn/go/vxrayui/internal/types"
 )
 
 type Poller struct {
 	parser   *SubscriptionParser
-	storage  storage.Storage
+	storage  types.Storage
 	engine   *decision.Engine
-	stats    *stats.Collector
 	sources  map[string]*SourceConfig
 	stopChan chan struct{}
 	wg       sync.WaitGroup
@@ -32,16 +30,14 @@ type SourceConfig struct {
 
 func NewPoller(
 	parser *SubscriptionParser,
-	store storage.Storage,
+	store types.Storage,
 	engine *decision.Engine,
-	stats *stats.Collector,
 	sources map[string]*SourceConfig,
 ) *Poller {
 	return &Poller{
 		parser:   parser,
 		storage:  store,
 		engine:   engine,
-		stats:    stats,
 		sources:  sources,
 		stopChan: make(chan struct{}),
 	}
@@ -98,7 +94,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 	data, hash, err := p.parser.Fetch(url)
 	if err != nil {
 		source.FailureCount++
-		logger.Logger.Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
+		logger.Error("Failed to fetch %s (attempt %d): %v", url, source.FailureCount, err)
 		return
 	}
 
@@ -112,7 +108,7 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 
 	// 验证并存储新配置
 	if valid := p.parser.Validate(data); valid {
-		newCfg := &storage.ConfigMetadata{
+		newCfg := &types.ConfigMetadata{
 			ID:          url,
 			Content:     data,
 			LastUpdated: time.Now(),
@@ -121,14 +117,14 @@ func (p *Poller) pollSingleSource(url string, source *SourceConfig) {
 		}
 
 		if err := p.storage.StoreConfig(newCfg); err != nil {
-			logger.Logger.Error("Failed to store config from %s: %v", url, err)
+			logger.Error("Failed to store config from %s: %v", url, err)
 			return
 		}
 
 		source.FailureCount = 0 // 重置失败计数
-		p.stats.RecordValidation(url, true)
+		// p.stats.RecordValidation(url, true)
 	} else {
-		p.stats.RecordValidation(url, false)
+		// p.stats.RecordValidation(url, false)
 	}
 }
 
@@ -141,9 +137,10 @@ func (p *Poller) calculateInterval(source *SourceConfig) time.Duration {
 	}
 
 	// 基于统计数据的动态调整
-	validRate := p.stats.GetValidityRate(source.URL)
-	adjustment := 1.0 + (1.0 - validRate) // 有效性越低，检查越频繁
-	return time.Duration(float64(baseInterval) * adjustment)
+	// validRate := p.stats.GetValidityRate(source.URL)
+	// adjustment := 1.0 + (1.0 - validRate) // 有效性越低，检查越频繁
+	// return time.Duration(float64(baseInterval) * adjustment)
+	return baseInterval
 }
 
 func min(a, b time.Duration) time.Duration {

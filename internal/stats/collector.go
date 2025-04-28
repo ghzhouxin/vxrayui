@@ -1,23 +1,23 @@
 package stats
 
 import (
+	"zhouxin.learn/go/vxrayui/internal/logger"
 	"zhouxin.learn/go/vxrayui/internal/storage"
+	"zhouxin.learn/go/vxrayui/internal/types"
 )
 
-type Collector struct {
-	storage storage.Storage
+func GetSchemeYieldRate(scheme string) (*types.SchemeYieldRate, error) {
+	rate, err := storage.Get[types.SchemeYieldRate](types.StorageKeySchemeYieldRate + scheme)
+	if err != nil {
+		logger.Error("failed to get scheme yield rate", "err", err.Error())
+		return nil, err
+	}
+	return &rate, err
 }
 
-func NewCollector(store storage.Storage) *Collector {
-	return &Collector{storage: store}
-}
-
-func (c *Collector) RecordValidation(configID string, isValid bool) error {
-	// 实现统计记录逻辑
-	return nil
-}
-
-func (c *Collector) GetValidityRate(configType string) float64 {
-	// 实现统计查询逻辑
-	return 0.95
+func SetSchemeYieldRate(rate *types.SchemeYieldRate) {
+	err := storage.Set(types.StorageKeySchemeYieldRate, rate)
+	if err != nil {
+		logger.Error("failed to set scheme yield rate", "err", err.Error())
+	}
 }

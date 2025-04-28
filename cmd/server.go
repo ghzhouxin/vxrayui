@@ -5,6 +5,7 @@ import (
 
 	"zhouxin.learn/go/vxrayui/config"
 	"zhouxin.learn/go/vxrayui/internal/logger"
+	"zhouxin.learn/go/vxrayui/internal/storage"
 	"zhouxin.learn/go/vxrayui/internal/subscription"
 )
 
@@ -13,16 +14,14 @@ func main() {
 
 	config.Init()
 	logger.Init()
+	storage.Init()
 
+	sub := subscription.PickSubscription()
+	logger.Info("Picked subscription", "scheme", sub.Scheme, "url", sub.Url)
 	parser := subscription.NewSubscriptionParser()
-	parser.ParseSubscription(config.Config.Subscriptions[0])
+	parser.ParseSubscription(sub)
 
 	/*
-		store, err := storage.NewBoltStore("configs.db")
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		engine := decision.NewEngine([]decision.Strategy{
 			&decision.FreshnessStrategy{},
 			&decision.SourcePriorityStrategy{},

@@ -11,13 +11,25 @@ import (
 )
 
 var (
-	Logger   *slog.Logger
+	logger   *slog.Logger
 	initOnce sync.Once
 )
 
+func Info(msg string, args ...any) {
+	logger.Info(msg, args...)
+}
+
+func Error(msg string, args ...any) {
+	logger.Error(msg, args...)
+}
+
+func Debug(msg string, args ...any) {
+	logger.Debug(msg, args...)
+}
+
 func Init() {
 	initOnce.Do(func() {
-		Logger = initLogger(config.Config.Logger)
+		logger = initLogger(config.GetLogger())
 	})
 }
 

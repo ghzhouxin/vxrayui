@@ -1,7 +1,7 @@
 package decision
 
 import (
-	"zhouxin.learn/go/vxrayui/internal/storage"
+	"zhouxin.learn/go/vxrayui/internal/types"
 )
 
 type Engine struct {
@@ -9,7 +9,7 @@ type Engine struct {
 }
 
 type Strategy interface {
-	Score(cfg *storage.ConfigMetadata) float64
+	Score(cfg *types.ConfigMetadata) float64
 	Weight() float64
 }
 
@@ -17,7 +17,7 @@ func NewEngine(strategies []Strategy) *Engine {
 	return &Engine{strategies: strategies}
 }
 
-func (e *Engine) Decide(configs []*storage.ConfigMetadata) *storage.ConfigMetadata {
+func (e *Engine) Decide(configs []*types.ConfigMetadata) *types.ConfigMetadata {
 	scores := make(map[string]float64)
 	for _, cfg := range configs {
 		for _, strat := range e.strategies {
@@ -25,7 +25,7 @@ func (e *Engine) Decide(configs []*storage.ConfigMetadata) *storage.ConfigMetada
 		}
 	}
 
-	var best *storage.ConfigMetadata
+	var best *types.ConfigMetadata
 	maxScore := -1.0
 	for _, cfg := range configs {
 		if score := scores[cfg.ID]; score > maxScore {

@@ -4,12 +4,12 @@ import (
 	"strings"
 	"time"
 
-	"zhouxin.learn/go/vxrayui/internal/storage"
+	"zhouxin.learn/go/vxrayui/internal/types"
 )
 
 type FreshnessStrategy struct{}
 
-func (s *FreshnessStrategy) Score(cfg *storage.ConfigMetadata) float64 {
+func (s *FreshnessStrategy) Score(cfg *types.ConfigMetadata) float64 {
 	age := time.Since(cfg.LastUpdated).Hours()
 	return 1 / (1 + age/24)
 }
@@ -20,7 +20,7 @@ func (s *FreshnessStrategy) Weight() float64 {
 
 type SourcePriorityStrategy struct{}
 
-func (s *SourcePriorityStrategy) Score(cfg *storage.ConfigMetadata) float64 {
+func (s *SourcePriorityStrategy) Score(cfg *types.ConfigMetadata) float64 {
 	// 根据URL判断源优先级
 	if strings.Contains(cfg.SourceURL, "prod") {
 		return 1.0

@@ -3,7 +3,6 @@ package subscription
 import (
 	"bufio"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,17 +12,9 @@ import (
 	"github.com/xtls/xray-core/infra/conf"
 	"zhouxin.learn/go/vxrayui/config"
 	"zhouxin.learn/go/vxrayui/internal/logger"
+	"zhouxin.learn/go/vxrayui/internal/types"
 	"zhouxin.learn/go/vxrayui/pkg/counter"
 )
-
-// 支持的协议前缀
-var supportedSchemes = []string{
-	"vless://",
-	"vmess://",
-	"socks://",
-	"ss://",
-	"trojan://",
-}
 
 // SubscriptionParser 用于解析订阅内容并生成 OutboundDetourConfig
 type SubscriptionParser struct{}
@@ -37,14 +28,14 @@ func NewSubscriptionParser() *SubscriptionParser {
 func (p *SubscriptionParser) ParseSubscription(subscription *config.Subscription) []*conf.OutboundDetourConfig {
 	resp, err := http.Get(subscription.Url)
 	if err != nil {
-		logger.Logger.Error(fmt.Sprintf("Failed to fetch subscription: %v", err))
+		logger.Error("Failed to fetch subscription", "err", err.Error())
 		return nil
 	}
 	defer resp.Body.Close()
 
 	reader := decodeBody(resp.Body, subscription.IsBase64)
 	if reader == nil {
-		logger.Logger.Error("Failed to decode subscription body")
+		logger.Error("Failed to decode subscription body")
 		return nil
 	}
 
@@ -71,7 +62,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		}
 
 		if !isValidLink(line) {
-			logger.Logger.Error(fmt.Sprintf("Unsupported subscription: %s", line))
+			logger.Error("Unsupported subscription", "url", line)
 			counter.Incr("subscription.invalid", 1)
 			continue
 		}
@@ -81,7 +72,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		// TODO 抽象方法
 		link, err := url.Parse(line)
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("Invalid URL in subscription: %s, error: %v", line, err))
+			logger.Error("Invalid Url in subscription", "url", line, "err", err.Error())
 			counter.Incr("subscription.invalid", 1)
 			continue
 		}
@@ -91,19 +82,21 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 		}
 		outbound, err := shareLink.Outbound()
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("Failed to parse outbound from link: %s, error: %v", line, err))
+			logger.Error("Failed to parse outbound from link", "link", line, "err", err.Error())
 			counter.Incr("subscription.parse.error", 1)
 			continue
 		}
+
+		// string(*outbound.StreamSetting.Network) + outbound.StreamSetting.Security
 		outbounds = append(outbounds, outbound)
 	}
 
 	if err := scanner.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("Error reading subscription: %v", err))
+		logger.Error("Error reading subscription", "err", err.Error())
 	}
 
 	cnt := counter.Get("subscription.invalid") + counter.Get("subscription.parse.error")
-	logger.Logger.Info(fmt.Sprintf("Parsed %d outbounds from subscription, error cnt: %v", len(outbounds), cnt))
+	logger.Info("Parsed outbounds from subscription result", "total", len(outbounds), "invalid", cnt)
 	return outbounds
 }
 
@@ -117,8 +110,8 @@ func (p *SubscriptionParser) Validate(data []byte) bool {
 
 // isValidLink 判断是否为支持的协议链接
 func isValidLink(link string) bool {
-	for _, scheme := range supportedSchemes {
-		if strings.HasPrefix(link, scheme) {
+	for _, scheme := range types.SupportedSchemes {
+		if strings.HasPrefix(link, scheme.String()) {
 			return true
 		}
 	}

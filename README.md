@@ -15,5 +15,4 @@ go run cmd/server.go
 
 ## TODO
 
-- config/config.go 封装包级可导出变量，暴露方法
-- internal/logger/logger.go 封装包级可导出变量，暴露方法
+- NONE
