@@ -8,12 +8,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/xtls/libxray/share"
 	"github.com/xtls/xray-core/infra/conf"
 	"zhouxin.learn/go/vxrayui/config"
 	"zhouxin.learn/go/vxrayui/internal/logger"
 	"zhouxin.learn/go/vxrayui/internal/types"
 	"zhouxin.learn/go/vxrayui/pkg/counter"
+	"zhouxin.learn/go/vxrayui/pkg/xray"
 )
 
 // SubscriptionParser 用于解析订阅内容并生成 OutboundDetourConfig
@@ -76,7 +76,7 @@ func parseSubscriptionContent(reader io.Reader) []*conf.OutboundDetourConfig {
 			counter.Incr("subscription.invalid", 1)
 			continue
 		}
-		shareLink := share.XrayShareLink{
+		shareLink := xray.XrayShareLink{
 			Link:    link,
 			RawText: line,
 		}

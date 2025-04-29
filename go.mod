@@ -2,13 +2,11 @@ module zhouxin.learn/go/vxrayui
 
 go 1.24.2
 
-replace (
-	github.com/xtls/libxray => ../libXray
-	github.com/xtls/xray-core => ../Xray-core
-)
+// github.com/xtls/libxray => ../libXray
+replace github.com/xtls/xray-core => ../Xray-core
 
 require (
-	github.com/xtls/libxray v0.0.0-00010101000000-000000000000
+	// github.com/xtls/libxray v0.0.0-00010101000000-000000000000
 	github.com/xtls/xray-core v0.0.0-00010101000000-000000000000
 	go.etcd.io/bbolt v1.4.0
 	gopkg.in/yaml.v3 v3.0.1
