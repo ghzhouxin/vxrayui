@@ -18,8 +18,9 @@ func main() {
 
 	sub := subscription.PickSubscription()
 	logger.Info("Picked subscription", "scheme", sub.Scheme, "url", sub.Url)
+
 	parser := subscription.NewSubscriptionParser()
-	parser.ParseSubscription(sub)
+	_ = parser.ParseSubscription(sub)
 
 	/*
 		engine := decision.NewEngine([]decision.Strategy{
